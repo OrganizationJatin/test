@@ -31,7 +31,6 @@ markdown_table += "|-----------|--------------------------|---------------------
 
 # Collect data for each repository
 for repo in org.get_repos():
-    print(f"Checking repository: {repo.name}")
     
     # Collect teams with admin role
     admin_teams = [team.name for team in repo.get_teams() if team.permission == "admin"]
