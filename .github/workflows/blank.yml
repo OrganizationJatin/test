@@ -40,7 +40,6 @@ jobs:
         with:
           github-token: ${{ secrets.GH_TOKEN }}
           script: |
-            const { context, github } = require('@actions/github');
             const issueTitle = "Admin Roles in Repositories";
             const issueBody = `### Admin Role Report\n\n${process.env.TABLE_CONTENT}`;
 
