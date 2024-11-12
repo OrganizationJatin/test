@@ -4,7 +4,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-dotenv_path = join(dirname(_file_), '.env')
+dotenv_path = join(dirname(__file__), '.env')  # Use __file__ instead of _file_
 load_dotenv(dotenv_path)
 access_token = os.getenv("GITHUB_TOKEN")
 organization_name = os.getenv("ORG")
