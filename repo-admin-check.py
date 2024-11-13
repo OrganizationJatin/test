@@ -1,10 +1,11 @@
 from github import Github
 import os
+import csv
 from os.path import join, dirname
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-dotenv_path = join(dirname(__file__), '.env')  # Use __file__ instead of _file_
+# Load environment variables from .env
+dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 access_token = os.getenv("GITHUB_TOKEN")
 organization_name = os.getenv("ORG")
@@ -16,7 +17,6 @@ if not organization_name:
     print("Organization name is not set.")
     exit(1)
 
-# Connect to GitHub
 g = Github(access_token)
 
 try:
@@ -25,21 +25,19 @@ except Exception as e:
     print(f"Error retrieving organization: {e}")
     exit(1)
 
-# Generate Markdown table header
-markdown_table = "| Repo Name | Teams (with Admin Role) | Members (with Admin Role) |\n"
-markdown_table += "|-----------|--------------------------|---------------------------|\n"
+# Create the CSV file with headers
+with open("admin_roles.csv", mode="w", newline="") as csv_file:
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow(["Repo Name", "Teams (with Admin Role)", "Members (with Admin Role)"])
 
-# Collect data for each repository
-for repo in org.get_repos():
-    
-    # Collect teams with admin role
-    admin_teams = [team.name for team in repo.get_teams() if team.permission == "admin"]
+    # Fetch repositories and admin roles
+    for repo in org.get_repos():
+        print(f"Checking repository: {repo.name}")
+        
+        admin_teams = [team.name for team in repo.get_teams() if team.permission == "admin"]
+        admin_members = [member.login for member in repo.get_collaborators(permission="admin")]
 
-    # Collect members with admin role
-    admin_members = [member.login for member in repo.get_collaborators(permission="admin")]
+        # Write row to CSV
+        csv_writer.writerow([repo.name, ", ".join(admin_teams), ", ".join(admin_members)])
 
-    # Add row to Markdown table
-    markdown_table += f"| {repo.name} | {', '.join(admin_teams)} | {', '.join(admin_members)} |\n"
-
-# Print the Markdown table so it can be captured by the GitHub Actions workflow
-print(markdown_table)
+print("CSV file 'admin_roles.csv' has been generated successfully.")
