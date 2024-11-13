@@ -27,43 +27,6 @@ jobs:
         run: |
           python3 repo-admin-check.py > markdown_table.txt
 
-      - name: Read Markdown table into environment variable
-        id: read_table
-        run: |
-          table_content=$(<markdown_table.txt)
-          echo "TABLE_CONTENT<<EOF" >> $GITHUB_ENV
-          echo "$table_content" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      name: Check admin teams and members in all repositories
-
-on:
-  workflow_dispatch:
-
-jobs:
-  check-admin-access-repos:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install PyGithub python-dotenv
-
-      - name: Run repo-admin-check.py script
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          ORG: ${{ vars.ORGANIZATION }}
-        run: |
-          python3 repo-admin-check.py > markdown_table.txt
-
       - name: Create GitHub Issue
         uses: actions/github-script@v6
         with:
