@@ -25,24 +25,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           ORG: ${{ vars.ORGANIZATION }}
         run: |
-          python3 repo-admin-check.py > markdown_table.txt
+          python3 repo-admin-check.py
 
-      - name: Create GitHub Issue
-        uses: actions/github-script@v6
+      - name: Upload CSV as artifact
+        uses: actions/upload-artifact@v3
         with:
-          github-token: ${{ secrets.GH_TOKEN }}
-          script: |
-            const fs = require('fs');
-
-            // Read the contents of markdown_table.txt
-            const markdownTable = fs.readFileSync('markdown_table.txt', 'utf8');
-            
-            const issueTitle = "Admin Roles in Repositories";
-            const issueBody = `### Admin Role Report\n\n${markdownTable}`;
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: issueTitle,
-              body: issueBody
-            });
+          name: admin_roles_report
+          path: admin_roles.csv
