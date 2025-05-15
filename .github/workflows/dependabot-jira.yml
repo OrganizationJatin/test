@@ -6,7 +6,7 @@ on:
 
 jobs:
   create-jira-issue:
-    if: github.event.client_payload.severity == 'critical'
+    if: github.event.client_payload.severity == 'high'
     runs-on: ubuntu-latest
     steps:
       - name: Create Jira Story
