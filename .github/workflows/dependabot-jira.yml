@@ -1,0 +1,31 @@
+name: Create Jira Story for Critical Dependabot Alerts
+
+on:
+  repository_dispatch:
+    types: [dependabot_alert]
+
+jobs:
+  create-jira-issue:
+    if: github.event.client_payload.severity == 'critical'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Jira Story
+        run: |
+          SUMMARY="Critical Dependabot Alert: ${{ github.event.client_payload.package }} in ${{ github.repository }}"
+          DESCRIPTION="**Alert:** ${{ github.event.client_payload.package }}\n\n**Affected Range:** ${{ github.event.client_payload.vulnerable_range }}\n\n**More Info:** ${{ github.event.client_payload.url }}"
+          
+          curl -X POST "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue" \
+            -u "${{ secrets.JIRA_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "fields": {
+                "project": {
+                  "key": "'${{ secrets.JIRA_PROJECT_KEY }}'"
+                },
+                "summary": "'"${SUMMARY}"'",
+                "description": "'"${DESCRIPTION//\"/\\\"}"'",
+                "issuetype": {
+                  "name": "Story"
+                }
+              }
+            }'
