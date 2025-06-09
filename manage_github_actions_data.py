@@ -2,9 +2,7 @@ import os
 import json
 import requests
 import base64
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.backends import default_backend
+from nacl import encoding, public  
 
 GITHUB_API = "https://api.github.com"
 ORG_NAME = os.getenv("ORG")
@@ -28,12 +26,10 @@ def get_public_key():
 
 
 def encrypt_secret(public_key: str, secret_value: str) -> str:
-    key_bytes = base64.b64decode(public_key)
-    public_key_obj = serialization.load_der_public_key(key_bytes, backend=default_backend())
-    encrypted = public_key_obj.encrypt(
-        secret_value.encode(),
-        padding.PKCS1v15()
-    )
+    public_key_bytes = base64.b64decode(public_key)
+    pk = public.PublicKey(public_key_bytes)
+    sealed_box = public.SealedBox(pk)
+    encrypted = sealed_box.encrypt(secret_value.encode())
     return base64.b64encode(encrypted).decode()
 
 
@@ -48,27 +44,28 @@ def create_secret(name: str, value: str, key_data):
     if response.status_code in [201, 204]:
         print(f"Secret '{name}' created.")
     else:
-        print(f"Failed to create secret '{name}': {response.text}")
+        print(f"Failed to create secret '{name}': {response.status_code} - {response.text}")
 
 
 def create_variable(name: str, value: str):
     url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables/{name}"
     payload = {"name": name, "value": value}
+    print(f"Creating variable at {url} with payload: {payload}")
     response = requests.put(url, headers=HEADERS, json=payload)
     if response.status_code in [201, 204]:
         print(f"Variable '{name}' created.")
     else:
-        print(f"Failed to create variable '{name}': {response.text}")
+        print(f"Failed to create variable '{name}': {response.status_code} - {response.text}")
 
 
 def main():
     if not all([ORG_NAME, REPO, GITHUB_TOKEN]):
-        print("Missing ORG, REPO or GITHUB_TOKEN.")
+        print("Missing ORG, REPO, or GITHUB_TOKEN.")
         exit(1)
 
     try:
-        secrets = json.loads(SECRETS_JSON)
-        variables = json.loads(VARIABLES_JSON)
+        secrets = json.loads(SECRETS_JSON) if SECRETS_JSON.strip() else {}
+        variables = json.loads(VARIABLES_JSON) if VARIABLES_JSON.strip() else {}
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON input: {e}")
         exit(1)
