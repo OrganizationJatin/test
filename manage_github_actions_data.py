@@ -50,12 +50,14 @@ def create_secret(name: str, value: str, key_data):
 def create_variable(name: str, value: str):
     url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables/{name}"
     payload = {"name": name, "value": value}
-    print(f"Creating variable at {url} with payload: {payload}")
+    print(f"\nCreating variable at {url}")
+    print(f"Payload: {payload}")
     response = requests.put(url, headers=HEADERS, json=payload)
     if response.status_code in [201, 204]:
         print(f"Variable '{name}' created.")
     else:
-        print(f"Failed to create variable '{name}': {response.status_code} - {response.text}")
+        print(f"Failed to create variable '{name}': {response.status_code}")
+        print(f"Response: {response.text}")
 
 
 def main():
