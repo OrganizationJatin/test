@@ -40,7 +40,7 @@ def create_secret(name: str, value: str, key_data):
         "encrypted_value": encrypted_value,
         "key_id": key_data['key_id']
     }
-    response = requests.put(url, headers=HEADERS, json=payload)
+    response = requests.post(url, headers=HEADERS, json=payload)
     if response.status_code in [201, 204]:
         print(f"Secret '{name}' created.")
     else:
@@ -48,11 +48,11 @@ def create_secret(name: str, value: str, key_data):
 
 
 def create_variable(name: str, value: str):
-    url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables/{name}"
+    url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables"
     payload = {"name": name, "value": value}
     print(f"\nCreating variable at {url}")
     print(f"Payload: {payload}")
-    response = requests.put(url, headers=HEADERS, json=payload)
+    response = requests.post(url, headers=HEADERS, json=payload)
     if response.status_code in [201, 204]:
         print(f"Variable '{name}' created.")
     else:
