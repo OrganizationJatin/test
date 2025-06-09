@@ -40,7 +40,7 @@ def create_secret(name: str, value: str, key_data):
         "encrypted_value": encrypted_value,
         "key_id": key_data['key_id']
     }
-    response = requests.post(url, headers=HEADERS, json=payload)
+    response = requests.put(url, headers=HEADERS, json=payload)
     if response.status_code in [201, 204]:
         print(f"Secret '{name}' created.")
     else:
