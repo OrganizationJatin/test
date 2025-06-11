@@ -6,6 +6,9 @@ on:
       repo_name:
         description: 'Target repository name'
         required: true
+      environment:
+        description: 'Target environment name (optional)'
+        required: false
       secrets_json:
         description: 'JSON object of secrets to add'
         required: false
@@ -35,4 +38,5 @@ jobs:
           REPO: ${{ github.event.inputs.repo_name }}
           SECRETS_JSON: ${{ github.event.inputs.secrets_json }}
           VARIABLES_JSON: ${{ github.event.inputs.variables_json }}
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
         run: python manage_github_actions_data.py
