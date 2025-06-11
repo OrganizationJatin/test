@@ -20,7 +20,11 @@ HEADERS = {
 
 
 def get_public_key():
-    url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/secrets/public-key"
+    if ENVIRONMENT:
+        url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/environments/{ENVIRONMENT}/secrets/public-key"
+    else:
+        url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/secrets/public-key"
+
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     return response.json()
@@ -66,19 +70,15 @@ def create_or_update_variable(name: str, value: str):
         post_url = f"{base}/actions/variables"
 
     get_resp = requests.get(get_url, headers=HEADERS)
+
     if get_resp.status_code == 200:
-        # Variable exists — update
-        patch_url = get_url
-        patch_resp = requests.patch(patch_url, headers=HEADERS, json={"value": value})
+        patch_resp = requests.patch(get_url, headers=HEADERS, json={"value": value})
         if patch_resp.status_code == 204:
             print(f"Variable '{name}' updated.")
         else:
             print(f"Failed to update variable '{name}': {patch_resp.status_code} - {patch_resp.text}")
     elif get_resp.status_code == 404:
-        # Variable does not exist — create
-        post_url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables"
-        payload = {"name": name, "value": value}
-        post_resp = requests.post(post_url, headers=HEADERS, json=payload)
+        post_resp = requests.post(post_url, headers=HEADERS, json={"name": name, "value": value})
         if post_resp.status_code == 201:
             print(f"Variable '{name}' created.")
         else:
