@@ -9,6 +9,7 @@ ORG_NAME = os.getenv("ORG")
 REPO = os.getenv("REPO")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
+ENVIRONMENT = os.getenv("ENVIRONMENT")
 SECRETS_JSON = os.getenv("SECRETS_JSON", "{}")
 VARIABLES_JSON = os.getenv("VARIABLES_JSON", "{}")
 
@@ -35,55 +36,67 @@ def encrypt_secret(public_key: str, secret_value: str) -> str:
 
 def create_or_update_secret(name: str, value: str, key_data):
     encrypted_value = encrypt_secret(key_data['key'], value)
-    url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/secrets/{name}"
+
+    if ENVIRONMENT:
+        url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/environments/{ENVIRONMENT}/secrets/{name}"
+    else:
+        url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/secrets/{name}"
+
     payload = {
         "encrypted_value": encrypted_value,
         "key_id": key_data['key_id']
     }
+
     response = requests.put(url, headers=HEADERS, json=payload)
     if response.status_code in [201]:
-        print(f"✅ Secret '{name}' created.")
+        print(f"Secret '{name}' created.")
     elif response.status_code == 204:
-        print(f"🔄 Secret '{name}' updated.")
+        print(f"Secret '{name}' updated.")
     else:
-        print(f"❌ Failed to create/update secret '{name}': {response.status_code} - {response.text}")
+        print(f"Failed to create/update secret '{name}': {response.status_code} - {response.text}")
 
 
 def create_or_update_variable(name: str, value: str):
-    get_url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables/{name}"
-    get_resp = requests.get(get_url, headers=HEADERS)
+    base = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}"
+    if ENVIRONMENT:
+        get_url = f"{base}/environments/{ENVIRONMENT}/variables/{name}"
+        post_url = f"{base}/environments/{ENVIRONMENT}/variables"
+    else:
+        get_url = f"{base}/actions/variables/{name}"
+        post_url = f"{base}/actions/variables"
 
+    get_resp = requests.get(get_url, headers=HEADERS)
     if get_resp.status_code == 200:
         # Variable exists — update
         patch_url = get_url
         patch_resp = requests.patch(patch_url, headers=HEADERS, json={"value": value})
         if patch_resp.status_code == 204:
-            print(f"🔄 Variable '{name}' updated.")
+            print(f"Variable '{name}' updated.")
         else:
-            print(f"❌ Failed to update variable '{name}': {patch_resp.status_code} - {patch_resp.text}")
+            print(f"Failed to update variable '{name}': {patch_resp.status_code} - {patch_resp.text}")
     elif get_resp.status_code == 404:
         # Variable does not exist — create
         post_url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/actions/variables"
         payload = {"name": name, "value": value}
         post_resp = requests.post(post_url, headers=HEADERS, json=payload)
         if post_resp.status_code == 201:
-            print(f"✅ Variable '{name}' created.")
+            print(f"Variable '{name}' created.")
         else:
-            print(f"❌ Failed to create variable '{name}': {post_resp.status_code} - {post_resp.text}")
+            print(f"Failed to create variable '{name}': {post_resp.status_code} - {post_resp.text}")
     else:
-        print(f"❌ Error checking variable '{name}': {get_resp.status_code} - {get_resp.text}")
+        print(f"Error checking variable '{name}': {get_resp.status_code} - {get_resp.text}")
 
 
 def main():
     if not all([ORG_NAME, REPO, GITHUB_TOKEN]):
-        print("❌ Missing ORG, REPO, or GITHUB_TOKEN.")
+        print("Missing ORG, REPO, or GITHUB_TOKEN.")
         exit(1)
 
     try:
         secrets = json.loads(SECRETS_JSON) if SECRETS_JSON.strip() else {}
         variables = json.loads(VARIABLES_JSON) if VARIABLES_JSON.strip() else {}
     except json.JSONDecodeError as e:
-        print(f"❌ Failed to decode JSON input: {e}")
+        print(f"Failed to decode JSON input: {e}")
         exit(1)
 
     if secrets:
