@@ -32,7 +32,8 @@ def ensure_environment_exists(env_name: str):
         payload = {
             "wait_timer": 0,
             "deployment_branch_policy": {
-                "protected_branches": True 
+                "protected_branches": True,
+                "custom_branch_policies": False  # ✅ required and must be different from above
             }
         }
         create_response = requests.put(url, headers=HEADERS, json=payload)
@@ -44,7 +45,6 @@ def ensure_environment_exists(env_name: str):
     else:
         print(f"Error checking environment '{env_name}': {response.status_code} - {response.text}")
         exit(1)
-
 
 
 def get_public_key():
