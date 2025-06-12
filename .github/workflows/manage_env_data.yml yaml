@@ -1,0 +1,31 @@
+name: Manage Environment Secrets and Variables
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_name:
+        required: true
+      environment:
+        required: true
+      secrets_json:
+        required: false
+      variables_json:
+        required: false
+
+jobs:
+  manage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install pynacl requests
+      - run: python manage_github_actions_data.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          ORG: ${{ github.repository_owner }}
+          REPO: ${{ github.event.inputs.repo_name }}
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          SECRETS_JSON: ${{ github.event.inputs.secrets_json }}
+          VARIABLES_JSON: ${{ github.event.inputs.variables_json }}
