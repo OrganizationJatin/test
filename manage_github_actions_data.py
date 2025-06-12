@@ -14,9 +14,8 @@ SECRETS_JSON = os.getenv("SECRETS_JSON", "{}")
 VARIABLES_JSON = os.getenv("VARIABLES_JSON", "{}")
 
 HEADERS = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28"
+    "Authorization": f"token {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github+json"
 }
 
 
