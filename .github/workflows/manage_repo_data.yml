@@ -26,4 +26,3 @@ jobs:
           REPO: ${{ github.event.inputs.repo_name }}
           SECRETS_JSON: ${{ github.event.inputs.secrets_json }}
           VARIABLES_JSON: ${{ github.event.inputs.variables_json }}
-          ENVIRONMENT: "{}"
