@@ -9,7 +9,7 @@ ORG_NAME = os.getenv("ORG")
 REPO = os.getenv("REPO")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "{}")
+ENVIRONMENT = os.getenv("ENVIRONMENT") or None
 SECRETS_JSON = os.getenv("SECRETS_JSON", "{}")
 VARIABLES_JSON = os.getenv("VARIABLES_JSON", "{}")
 
