@@ -14,9 +14,38 @@ SECRETS_JSON = os.getenv("SECRETS_JSON", "{}")
 VARIABLES_JSON = os.getenv("VARIABLES_JSON", "{}")
 
 HEADERS = {
-    "Authorization": f"token {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github+json"
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
 }
+
+
+def ensure_environment_exists(env_name: str):
+    url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/environments/{env_name}"
+    response = requests.get(url, headers=HEADERS)
+
+    if response.status_code == 200:
+        print(f"Environment '{env_name}' already exists.")
+        return
+
+    if response.status_code == 404:
+        print(f"Environment '{env_name}' does not exist. Creating it...")
+        payload = {
+            "wait_timer": 0,
+            "deployment_branch_policy": {
+                "protected_branches": False,
+                "custom_branch_policies": False
+            }
+        }
+        create_response = requests.put(url, headers=HEADERS, json=payload)
+        if create_response.status_code in [200, 201]:
+            print(f"Environment '{env_name}' created successfully.")
+        else:
+            print(f"Failed to create environment '{env_name}': {create_response.status_code} - {create_response.text}")
+            exit(1)
+    else:
+        print(f"Error checking environment '{env_name}': {response.status_code} - {response.text}")
+        exit(1)
 
 
 def get_public_key():
@@ -52,7 +81,7 @@ def create_or_update_secret(name: str, value: str, key_data):
     }
 
     response = requests.put(url, headers=HEADERS, json=payload)
-    if response.status_code in [201]:
+    if response.status_code == 201:
         print(f"Secret '{name}' created.")
     elif response.status_code == 204:
         print(f"Secret '{name}' updated.")
@@ -98,6 +127,10 @@ def main():
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON input: {e}")
         exit(1)
+
+    # Ensure environment exists before doing anything
+    if ENVIRONMENT:
+        ensure_environment_exists(ENVIRONMENT)
 
     if secrets:
         key_data = get_public_key()
