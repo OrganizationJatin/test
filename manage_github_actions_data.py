@@ -33,7 +33,7 @@ def ensure_environment_exists(env_name: str):
             "wait_timer": 0,
             "deployment_branch_policy": {
                 "protected_branches": True,
-                "custom_branch_policies": False  # ✅ required and must be different from above
+                "custom_branch_policies": False  
             }
         }
         create_response = requests.put(url, headers=HEADERS, json=payload)
@@ -126,8 +126,7 @@ def main():
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON input: {e}")
         exit(1)
-
-    # Ensure environment exists before doing anything
+        
     if ENVIRONMENT:
         ensure_environment_exists(ENVIRONMENT)
 
