@@ -20,7 +20,6 @@ HEADERS = {
 
 
 def get_public_key():
-    print(ENVIRONMENT)
     if ENVIRONMENT:
         url = f"{GITHUB_API}/repos/{ORG_NAME}/{REPO}/environments/{ENVIRONMENT}/secrets/public-key"
     else:
