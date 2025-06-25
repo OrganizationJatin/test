@@ -29,7 +29,8 @@ jobs:
           exclude_teams = set(slug.strip() for slug in os.getenv("EXCLUDE_TEAMS", "").split(",") if slug.strip())
 
           g = Github(token)
-          org = g.get_organization(g.get_user().login)
+          org_name = os.environ["ORG"]
+          org = g.get_organization(org_name)
 
           print("Fetching organization admins...")
           admins = set(user.login for user in org.get_members(role="admin"))
