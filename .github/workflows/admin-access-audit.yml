@@ -1,0 +1,70 @@
+name: Admin Access Audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-admin-access-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install PyGithub
+        run: pip install PyGithub
+
+      - name: Generate CSV of Admin Access (users + teams)
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EXCLUDE_TEAMS: ${{ vars.exclude_teams }}
+        run: |
+          python3 <<EOF
+          import os
+          import csv
+          from github import Github
+
+          token = os.environ["GH_TOKEN"]
+          exclude_teams = set(slug.strip() for slug in os.getenv("EXCLUDE_TEAMS", "").split(",") if slug.strip())
+
+          g = Github(token)
+          org = g.get_organization(g.get_user().login)
+
+          print("Fetching organization admins...")
+          admins = set(user.login for user in org.get_members(role="admin"))
+
+          output = []
+          header = ["repository", "entity_type", "name", "permission"]
+
+          print("Scanning repositories...")
+          for repo in org.get_repos():
+              # Users with admin access (exclude org admins)
+              for collab in repo.get_collaborators(permission="admin"):
+                  if collab.login not in admins:
+                      output.append([repo.name, "user", collab.login, "admin"])
+                      print(f"User '{collab.login}' has admin access to {repo.name}")
+
+              # Teams with admin access (exclude excluded teams)
+              for team in org.get_teams():
+                  try:
+                      permission = team.get_repo_permission(repo)
+                      if permission == "admin" and team.slug not in exclude_teams:
+                          output.append([repo.name, "team", team.slug, "admin"])
+                          print(f"Team '{team.slug}' has admin access to {repo.name}")
+                  except Exception as e:
+                      continue  # Team might not have access at all
+
+          with open("admin_access_report.csv", "w", newline="") as f:
+              writer = csv.writer(f)
+              writer.writerow(header)
+              writer.writerows(output)
+
+          print("✅ CSV report generated: admin_access_report.csv")
+          EOF
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: admin-access-report
+          path: admin_access_report.csv
