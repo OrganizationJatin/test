@@ -18,7 +18,7 @@ jobs:
       - name: Generate CSV of Admin Access (users + teams)
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          EXCLUDE_TEAMS: ${{ vars.exclude_teams }}
+          EXCLUDE_TEAMS: ${{ vars.EXCLUDE_TEAMS }}
         run: |
           python3 <<EOF
           import os
