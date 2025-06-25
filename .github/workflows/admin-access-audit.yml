@@ -19,6 +19,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           EXCLUDE_TEAMS: ${{ vars.EXCLUDE_TEAMS }}
+          ORG: ${{ github.repository_owner }}
+
         run: |
           python3 <<EOF
           import os
