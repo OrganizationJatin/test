@@ -1,0 +1,75 @@
+name: Admin Access
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-admin-access-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install PyGithub
+        run: pip install PyGithub
+
+      - name: Generate CSV of Admin Access (excluding org admins and EXCLUDE_TEAMS)
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          EXCLUDE_TEAMS: ${{ vars.EXCLUDE_TEAMS }}
+          ORG: ${{ github.repository_owner }}
+        run: |
+          python3 <<EOF
+          import os
+          import csv
+          from github import Github
+
+          token = os.environ["GH_TOKEN"]
+          org_name = os.environ["ORG"]
+          exclude_team_slugs = [t.strip() for t in os.getenv("EXCLUDE_TEAMS", "").split(",") if t.strip()]
+
+          g = Github(token)
+          org = g.get_organization(org_name)
+
+          print("🔐 Fetching organization admins...")
+          org_admins = set(user.login for user in org.get_members(role="admin"))
+
+          print("🚫 Fetching members of excluded teams...")
+          exclude_members = set()
+          for slug in exclude_team_slugs:
+              try:
+                  team = org.get_team_by_slug(slug)
+                  members = list(team.get_members())
+                  exclude_members.update(member.login for member in members)
+                  print(f"→ Exclude team '{slug}': {len(members)} members")
+              except Exception as e:
+                  print(f"⚠️ Failed to load team '{slug}': {e}")
+
+          header = ["repository", "user", "permission"]
+          output = []
+
+          print("📦 Scanning repositories for admin collaborators...")
+          for repo in org.get_repos():
+              try:
+                  for collab in repo.get_collaborators(permission="admin"):
+                      if collab.login not in org_admins and collab.login not in exclude_members:
+                          output.append([repo.name, collab.login, "admin"])
+                          print(f"✅ {collab.login} has admin access to {repo.name}")
+              except Exception as e:
+                  print(f"⚠️ Failed to fetch collaborators for {repo.name}: {e}")
+
+          with open("admin_access_report.csv", "w", newline="") as f:
+              writer = csv.writer(f)
+              writer.writerow(header)
+              writer.writerows(output)
+
+          print("✅ Report generated: admin_access_report.csv")
+          EOF
+
+      - name: Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-access-report
+          path: admin_access_report.csv
