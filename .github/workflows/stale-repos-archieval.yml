@@ -1,0 +1,59 @@
+name: stale repo identifier
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "3 2 1 * *"
+
+permissions:
+  contents: read
+  issues: write
+  administration: write # Needed to archive repositories
+
+jobs:
+  build:
+    name: stale repo identifier
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      issues: write
+      administration: write # Grant admin permission to update repo settings
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run stale_repos tool
+        uses: github/stale-repos@v1
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          ORGANIZATION: ${{ vars.ORGANIZATION }}
+          EXEMPT_TOPICS: "keep,template"
+          INACTIVE_DAYS: 60
+          ACTIVITY_METHOD: "pushed"
+          ADDITIONAL_METRICS: "release,pr"
+
+      - name: Create issue
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: Stale repository report
+          content-filepath: ./stale_repos.md
+          assignees: janvipm
+
+      - name: Archive stale repos
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          ORG: ${{ vars.ORGANIZATION }}
+        run: |
+          echo "Parsing stale_repos.md to find repos..."
+          grep -oP '(?<=/)[a-zA-Z0-9._-]+(?=\))' stale_repos.md > repos.txt
+
+          while IFS= read -r repo
+          do
+            echo "Archiving $repo"
+            curl -s -X PATCH \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: token $GH_TOKEN" \
+              "https://api.github.com/repos/$ORG/$repo" \
+              -d '{"archived":true}'
+          done < repos.txt
