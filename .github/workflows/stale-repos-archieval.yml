@@ -27,7 +27,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           ORGANIZATION: ${{ vars.ORGANIZATION }}
           EXEMPT_TOPICS: "keep,template"
-          INACTIVE_DAYS: 2
+          INACTIVE_DAYS: 55
           ACTIVITY_METHOD: "pushed"
           ADDITIONAL_METRICS: "release,pr"
 
@@ -36,15 +36,19 @@ jobs:
         with:
           title: Stale repository report
           content-filepath: ./stale_repos.md
-          assignees: janvipm
+          assignees: JatinRautela14
 
       - name: Archive stale repos
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          ORG: ${{ vars.ORGANIZATION }}
         run: |
           echo "Parsing stale_repos.md to find repos..."
-          grep -oP '(?<=/)[a-zA-Z0-9._-]+(?=\))' stale_repos.md > repos.txt
+          grep -o 'https://github.com/[^[:space:]]*' stale_repos.md | sed 's#https://github.com/##' > repos.txt || true
+
+          if [ ! -s repos.txt ]; then
+            echo "No repositories found to archive. Exiting step."
+            exit 0
+          fi
 
           while IFS= read -r repo
           do
@@ -52,6 +56,7 @@ jobs:
             curl -s -X PATCH \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: token $GH_TOKEN" \
-              "https://api.github.com/repos/$ORG/$repo" \
+              "https://api.github.com/repos/$repo" \
               -d '{"archived":true}'
           done < repos.txt
+
