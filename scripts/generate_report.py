@@ -36,7 +36,7 @@ def main():
         raise EnvironmentError('GITHUB_TOKEN not set')
 
     gh = Github(token)
-    org = gh.get_organization('YOUR_ORG_NAME')  # Replace with your GitHub organization name
+    org = gh.get_organization('OrganizationJatin')  # Replace with your GitHub organization name
     repos = org.get_repos()
 
     report_dir = 'report'
