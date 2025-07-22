@@ -21,7 +21,7 @@ jobs:
 
       - name: Run report script
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure this secret has repo & workflow scopes
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}  # Ensure this secret has repo & workflow scopes
         run: python scripts/generate_report.py
 
       - name: Upload CSV as artifact
