@@ -25,7 +25,7 @@ jobs:
         run: python scripts/generate_report.py
 
       - name: Upload CSV as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: actions-report
           path: actions_report.csv
