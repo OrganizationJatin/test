@@ -31,7 +31,7 @@ def classify_workflow(workflow_yaml):
 
 
 def main():
-    token = os.getenv('GITHUB_TOKEN')
+    token = os.getenv('GH_TOKEN')
     if not token:
         raise EnvironmentError('GITHUB_TOKEN not set')
 
@@ -65,7 +65,9 @@ def main():
                 # No workflows directory or API error
                 pass
 
-            writer.writerow([repo.full_name, using, ci_flag, cd_flag])
+            # Only write rows for repos actually using Actions
+            if using:
+                writer.writerow([repo.full_name, using, ci_flag, cd_flag])
 
     print(f'Report generated: {output_file}')
 
