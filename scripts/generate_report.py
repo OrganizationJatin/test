@@ -31,7 +31,7 @@ def classify_workflow(workflow_yaml):
 
 
 def main():
-    token = os.getenv('GH_TOKEN')
+    token = os.getenv('GITHUB_TOKEN')
     if not token:
         raise EnvironmentError('GITHUB_TOKEN not set')
 
