@@ -24,8 +24,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure this secret has repo & workflow scopes
         run: python scripts/generate_report.py
 
-      - name: Upload report artifact
+      - name: Upload CSV as artifact
         uses: actions/upload-artifact@v3
         with:
           name: actions-report
-          path: report/actions_report.csv
+          path: actions_report.csv
