@@ -1,0 +1,5 @@
+-   id: my-custom-hook
+    name: My Custom Hook
+    entry: ./scripts/my_hook.sh
+    language: script
+    files: \.py$
